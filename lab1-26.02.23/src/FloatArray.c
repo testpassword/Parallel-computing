@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+
+__thread unsigned int seed = 0;
 
 
 typedef struct float_array {
@@ -35,44 +38,100 @@ float reduce(float_array* arr, float init, float(* transform)(float, float)) {
     return acc;
 }
 
-float_array* merge(float_array* arr1, float_array* arr2, float(* transform)(float, float)) {
-    for (unsigned long i = 0; i < arr2->size; i++) 
-        arr2->begin_ptr[i] = transform(arr1->begin_ptr[i], arr2->begin_ptr[i]);
-    return arr2;
+float_array* merge(float_array* from, float_array* to, float(* transform)(float, float)) {
+    for (unsigned long i = 0; i < to->size; i++) 
+        to->begin_ptr[i] = transform(from->begin_ptr[i], to->begin_ptr[i]);
+    return to;
+}
+
+float_array* fill_rand(float_array* arr, int max, int min) {
+    for (unsigned long i = 0; i < arr->size; i++) {
+        seed = i;
+        arr->begin_ptr[i] = (max <= min || abs(max) == abs(min)) ? 0 : min + rand_r(&seed) % ((max + 1) - min);
+    }
+    return arr;
+}
+
+float_array clone(float_array* arr) {
+    float_array new = FloatArray(arr->size);
+    for (unsigned long i = 0; i < arr->size; i++) 
+        push(&new, arr->begin_ptr[i]);
+    return new;
+}
+
+void for_each(float_array* arr, void(* action)(float)) {
+    for (unsigned long i = 0; i < arr->size; i++) 
+        action(arr->begin_ptr[i]);
+}
+
+float_array filter(float_array* arr, bool(* check)(float)) {
+    unsigned long new_arr_size = 0;
+    for (unsigned long i = 0; i < arr->size; i++) 
+        if (check(arr->begin_ptr[i]) == true) 
+            new_arr_size++;
+    float_array new = FloatArray(new_arr_size);
+    for (unsigned long i = 0; i < arr->size; i++) 
+        if (check(arr->begin_ptr[i]) == true) 
+            push(&new, arr->begin_ptr[i]);
+    return new;
+}
+
+float min(float_array* arr) {
+    float min = arr->begin_ptr[0];
+    for (unsigned long i = 0; i < arr->size; i++) {
+        float it = arr->begin_ptr[i];
+        if (it < min) min = it;
+    }
+    return min;
+}
+
+float max(float_array* arr) {
+    float max = arr->begin_ptr[0];
+    for (unsigned long i = 0; i < arr->size; i++) {
+        float it = arr->begin_ptr[i];
+        if (it > max) max = it;
+    }
+    return max;
+}
+
+void clean(float_array* arr) {
+    free(arr->begin_ptr);
 }
 
 float_array* print(float_array* arr) {
-    for (unsigned long i = 0; i < arr->size; i++) 
-        printf("%.6f\n", arr->begin_ptr[i]);
+    printf("[");
+    for (unsigned long i = 0; i < arr->size; i++) {
+        printf("%.6f", arr->begin_ptr[i]);
+        if (i != arr->size - 1) printf(", ");
+    }
+    printf("]\n");
     return arr;
 }
 
 float_array* sort(float_array* arr) {
-    /* I would like the functions to be nested, but this cannot be done in C, so I declared them 
-    inside the main function to stylistically show that these functions are not self-contained. */
-    void swap(float* a, float* b);
-    void heapify(float arr[], int N, int i);
+    void __swap(float* a, float* b);
+    void __heapify(float arr[], int N, int i);
     for (int i = arr->size / 2 - 1; i >= 0; i--) 
-        heapify(arr->begin_ptr, arr->size, i);
+        __heapify(arr->begin_ptr, arr->size, i);
     for (int i = arr->size - 1; i >= 0; i--) {
-        swap(&arr->begin_ptr[0], &arr->begin_ptr[i]);
-        heapify(arr->begin_ptr, i, 0);
+        __swap(&arr->begin_ptr[0], &arr->begin_ptr[i]);
+        __heapify(arr->begin_ptr, i, 0);
     }
     return arr;
 }
-    void swap(float* a, float* b) {
-        int temp = *a;
+    void __swap(float* a, float* b) {
+        float temp = *a;
         *a = *b;
         *b = temp;
     }
-    void heapify(float arr[], int N, int i) {
+    void __heapify(float arr[], int N, int i) {
         int largest = i;
         int left = 2 * i + 1;
         int right = 2 * i + 2;
         if (left < N && arr[left] > arr[largest]) largest = left;
         if (right < N && arr[right] > arr[largest]) largest = right;
         if (largest != i) {
-            swap(&arr[i], &arr[largest]);
-            heapify(arr, N, largest);
+            __swap(&arr[i], &arr[largest]);
+            __heapify(arr, N, largest);
         }
     }
