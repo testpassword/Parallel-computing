@@ -8,10 +8,12 @@
 #define NUM_OF_EXPEREMENTS 100
 #define A 392
 
-float hyper_tan_minus1(float x) { return tanh(x) - 1; }
+float hyper_tan_minus1(float x) { return tanh(x) + 1; }  // special function discussed personally with the teacher 
+float to_negative0_1(float x) { return x / 1000 * -1; }  // special function discussed personally with the teacher 
 float abs_sin(float val1, float val2) { return fabs(sin(val1 + val2)); }
 float pair_min(float val1, float val2) { return val1 < val2 ? val1 : val2; }
 bool not_null(float val) { return val != 0 && val != NAN; }
+
 
 int main(int argc, char* argv[]) {
     if (argc < 2) return -1;
@@ -23,6 +25,7 @@ int main(int argc, char* argv[]) {
         float_array M1 = FloatArray(N);
         float_array M2 = FloatArray(N / 2);
         fill_rand(&M1, A, 1);
+        map(&M1, to_negative0_1); // special transform discussed personally with the teacher 
         fill_rand(&M2, 10 * A, A);
         // MAP
         map(&M1, hyper_tan_minus1);
@@ -49,7 +52,7 @@ int main(int argc, char* argv[]) {
     }
     gettimeofday(&T2, NULL);
     printf(
-        "\nN=%d. Milliseconds passed: %ld\n", 
+        "N=%d. Milliseconds passed: %ld\n", 
         N, 
         1000 * (T2.tv_sec - T1.tv_sec) + (T2.tv_usec - T1.tv_usec) / 1000
     );
