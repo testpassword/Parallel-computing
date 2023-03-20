@@ -10,4 +10,4 @@ RUN apt update && \
 WORKDIR /lab2
 COPY . .
 RUN ./build.sh
-ENV LD_LIBRARY_PATH=/lab2/src/FW_1.3.1_Lin64/lib
+ENV LD_LIBRARY_PATH=/lab2/src/FW_1.3.1_Lin64/lib:$LD_LIBRARY_PATH

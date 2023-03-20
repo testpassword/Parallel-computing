@@ -9,5 +9,5 @@ for FILE in *; do
     done
 done
 cd ../..
-gcc -O3 -Wall -Werror -o lab2.o lab2.c -lm -I FW_1.3.1_Lin64 -c
-gcc -O3 -L FW_1.3.1_Lin64/lib lab2.o -o ../lab2 -lfwImage -lfwBase
+gcc -O3 -Wall -Werror -o lab2.o lab2.c -I FW_1.3.1_Lin64 -c
+gcc -O3 -L FW_1.3.1_Lin64/lib lab2.o -o ../lab2 -lm -lfwImage -lfwBase
