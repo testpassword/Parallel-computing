@@ -9,4 +9,4 @@ RUN apt update && \
     bc
 WORKDIR /lab1
 COPY . .
-RUN chmod +x perfomance_test.sh && ./perfomance_test.sh
+RUN chmod +x perfomance_test.sh

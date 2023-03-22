@@ -1,5 +1,7 @@
-curl -L https://sourceforge.net/projects/framewave/files/framewave-releases/Framewave%201.3.1/FW_1.3.1_Lin64.tar.gz/download > AMD_Framewave_Lin64.tar.gz
-tar xvzf AMD_Framewave_Lin64.tar.gz
+AMD_FW_DISTRO="AMD_Framewave_Lin64.tar.gz"
+curl -L https://sourceforge.net/projects/framewave/files/framewave-releases/Framewave%201.3.1/FW_1.3.1_Lin64.tar.gz/download > $AMD_FW_DISTRO
+tar xvzf $AMD_FW_DISTRO
+rm $AMD_FW_DISTRO
 mv FW_1.3.1_Lin64 src/
 cd src/FW_1.3.1_Lin64/lib
 for FILE in *; do

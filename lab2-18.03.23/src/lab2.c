@@ -117,7 +117,6 @@ int main(int argc, char* argv[]) {
     const int N = atoi(argv[1]);
     const int M = atoi(argv[2]);
     fwSetNumThreads(M);
-    printf("test flight\n");
     gettimeofday(&T1, NULL);
     for (int i = 0; i < NUM_OF_EXPEREMENTS; i++) {
         // GENERATE
@@ -131,14 +130,12 @@ int main(int argc, char* argv[]) {
         fwsTanh_32f_A11(M1.begin_ptr, M1.begin_ptr, M1.size);
         fwsAddC_32f(M1.begin_ptr, 1, M1.begin_ptr, M1.size);
         fwsCopy_32f(M2.begin_ptr, M2_COPY.begin_ptr, M2.size);
-
-        // TODO: заменить этот цикл
-        for (unsigned long i = 0; i < M2.size; i++) {
-            float m2i_cur = M2_COPY.begin_ptr[i];
-            float m2i_prev = i == 0 ? 0 : M2_COPY.begin_ptr[i - 1];
-            M2.begin_ptr[i] = abs_sin(m2i_cur, m2i_prev);
-        }
-
+        fwsSqrt_32f_A11(M1.begin_ptr, M1.begin_ptr, M1.size);
+        fwsTanh_32f_A11(M1.begin_ptr, M1.begin_ptr, M1.size);
+        fwsInv_32f_A11(M1.begin_ptr, M1.begin_ptr, M1.size);
+        fwsAdd_32f(M2_COPY.begin_ptr, &M2_COPY.begin_ptr[1], &M2.begin_ptr[1], M2.size / 2 - 1);
+        fwsSin_32f_A11(M2.begin_ptr, M2.begin_ptr, M2.size / 2);
+        fwsAbs_32f_I(M2.begin_ptr, M2.size / 2);
         fwFree(M2_COPY.begin_ptr);
         // MERGE
         fwsMinEvery_32f_I(M1.begin_ptr, M2.begin_ptr, M2.size);
