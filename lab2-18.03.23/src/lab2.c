@@ -4,6 +4,8 @@
 #include <sys/time.h>
 #include <stdbool.h>
 #include "FW_1.3.1_Lin64/fwBase.h"
+#include "FW_1.3.1_Lin64/fwSignal.h"
+
 
 #define NUM_OF_EXPEREMENTS 100
 #define A 392
@@ -36,25 +38,12 @@ float_array* map(float_array* arr, float(* transform)(float)) {
     return arr;
 }
 
-float_array* merge(float_array* from, float_array* to, float(* transform)(float, float)) {
-    for (unsigned long i = 0; i < to->size; i++) 
-        to->begin_ptr[i] = transform(from->begin_ptr[i], to->begin_ptr[i]);
-    return to;
-}
-
 float_array* fill_rand(float_array* arr, int max, int min) {
     for (unsigned long i = 0; i < arr->size; i++) {
         seed = i;
         arr->begin_ptr[i] = (max <= min || abs(max) == abs(min)) ? 0 : min + rand_r(&seed) % ((max + 1) - min);
     }
     return arr;
-}
-
-float_array clone(float_array* arr) {
-    float_array new = FloatArray(arr->size);
-    for (unsigned long i = 0; i < arr->size; i++) 
-        push(&new, arr->begin_ptr[i]);
-    return new;
 }
 
 float_array filter(float_array* arr, bool(* check)(float)) {
@@ -76,10 +65,6 @@ float min(float_array* arr) {
         if (it < min) min = it;
     }
     return min;
-}
-
-void clean(float_array* arr) {
-    free(arr->begin_ptr);
 }
 
 float_array* print(float_array* arr) {
@@ -121,51 +106,55 @@ float_array* sort(float_array* arr) {
     }
 
 
-float hyper_tan_minus1(float x) { return tanh(x) + 1; }  // special function discussed personally with the teacher 
 float to_negative0_1(float x) { return x / 1000 * -1; }  // special function discussed personally with the teacher 
 float abs_sin(float val1, float val2) { return fabs(sin(val1 + val2)); }
-float pair_min(float val1, float val2) { return val1 < val2 ? val1 : val2; }
 bool not_null(float val) { return val != 0 && val != NAN; }
 
 
-int main(int argc, char* argv[]) {
-
-    printf("test flight\n");
-    
+int main(int argc, char* argv[]) {    
     if (argc < 2) return -1;
     struct timeval T1, T2;
     const int N = atoi(argv[1]);
     const int M = atoi(argv[2]);
     fwSetNumThreads(M);
+    printf("test flight\n");
     gettimeofday(&T1, NULL);
     for (int i = 0; i < NUM_OF_EXPEREMENTS; i++) {
         // GENERATE
         float_array M1 = FloatArray(N);
         float_array M2 = FloatArray(N / 2);
+        float_array M2_COPY = FloatArray(N / 2);
         fill_rand(&M1, A, 1);
         map(&M1, to_negative0_1); // special transform discussed personally with the teacher 
         fill_rand(&M2, 10 * A, A);
         // MAP
-        map(&M1, hyper_tan_minus1);
-        float_array M2_COPY = clone(&M2);
+        fwsTanh_32f_A11(M1.begin_ptr, M1.begin_ptr, M1.size);
+        fwsAddC_32f(M1.begin_ptr, 1, M1.begin_ptr, M1.size);
+        fwsCopy_32f(M2.begin_ptr, M2_COPY.begin_ptr, M2.size);
+
+        // TODO: заменить этот цикл
         for (unsigned long i = 0; i < M2.size; i++) {
             float m2i_cur = M2_COPY.begin_ptr[i];
             float m2i_prev = i == 0 ? 0 : M2_COPY.begin_ptr[i - 1];
             M2.begin_ptr[i] = abs_sin(m2i_cur, m2i_prev);
         }
-        clean(&M2_COPY);
-        // MERGE && SORT
-        sort(merge(&M1, &M2, pair_min));
+
+        fwFree(M2_COPY.begin_ptr);
+        // MERGE
+        fwsMinEvery_32f_I(M1.begin_ptr, M2.begin_ptr, M2.size);
+        // SORT
+        sort(&M2);
         // REDUCE
         float_array not_null_arr = filter(&M2, not_null);
         float min_not_null = min(&not_null_arr);
         float sum = 0;
         for (unsigned long i = 0; i < M2.size; i++) {
             float it = M2.begin_ptr[i];
-            if ((int)(it / min_not_null) == 0) sum+= sin(it);
+            if ((int)(it / min_not_null) == 0)
+                sum += sin(it);
         }
-        clean(&M1);
-        clean(&M2);
+        free(M1.begin_ptr);
+        free(M2.begin_ptr);
         //printf("Run[%d] = %f\n", i, sum);
     }
     gettimeofday(&T2, NULL);

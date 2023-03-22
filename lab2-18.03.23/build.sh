@@ -10,4 +10,4 @@ for FILE in *; do
 done
 cd ../..
 gcc -O3 -Wall -Werror -o lab2.o lab2.c -I FW_1.3.1_Lin64 -c
-gcc -O3 -L FW_1.3.1_Lin64/lib lab2.o -o ../lab2 -lm -lfwImage -lfwBase
+gcc -O3 -L FW_1.3.1_Lin64/lib lab2.o -o ../lab2 -lm -lfwImage -lfwBase -lfwSignal
