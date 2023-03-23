@@ -107,7 +107,6 @@ float_array* sort(float_array* arr) {
 
 
 float to_negative0_1(float x) { return x / 1000 * -1; }  // special function discussed personally with the teacher 
-float abs_sin(float val1, float val2) { return fabs(sin(val1 + val2)); }
 bool not_null(float val) { return val != 0 && val != NAN; }
 
 
