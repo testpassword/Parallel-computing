@@ -2,7 +2,6 @@ FROM debian:latest
 RUN apt update && \
     apt install -y --allow-unauthenticated \
     g++ \
-    gnuplot \
     nano \
     screenfetch \
     bc

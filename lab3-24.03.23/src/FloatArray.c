@@ -29,21 +29,33 @@ float_array* push(float_array* restrict arr, float val) {
 }
 
 float_array* map(float_array* restrict arr, float(* transform)(float)) {
+    #if defined(CHUNK_SIZE)
     #pragma omp parallel for default(none) shared(arr, transform) schedule(SCHEDULE_TYPE, CHUNK_SIZE)
+    #else
+    #pragma omp parallel for default(none) shared(arr, transform) schedule(auto)
+    #endif
     for (unsigned long i = 0; i < arr->size; i++)
         arr->begin_ptr[i] = transform(arr->begin_ptr[i]);
     return arr;
 }
 
 float_array* merge(float_array* restrict from, float_array* restrict to, float(* transform)(float, float)) {
+    #if defined(CHUNK_SIZE)
     #pragma omp parallel for default(none) shared(from, to, transform) schedule(SCHEDULE_TYPE, CHUNK_SIZE)
+    #else
+    #pragma omp parallel for default(none) shared(from, to, transform) schedule(auto)
+    #endif
     for (unsigned long i = 0; i < to->size; i++) 
         to->begin_ptr[i] = transform(from->begin_ptr[i], to->begin_ptr[i]);
     return to;
 }
 
 float_array* fill_rand(float_array* restrict arr, int max, int min) {
+    #if defined(CHUNK_SIZE)
     #pragma omp parallel for default(none) shared(arr, min, max) schedule(SCHEDULE_TYPE, CHUNK_SIZE)
+    #else
+    #pragma omp parallel for default(none) shared(arr, min, max) schedule(auto)
+    #endif
     for (unsigned long i = 0; i < arr->size; i++) {
         seed = i;
         arr->begin_ptr[i] = (max <= min || abs(max) == abs(min)) ? 0 : min + rand_r(&seed) % ((max + 1) - min);
@@ -53,7 +65,11 @@ float_array* fill_rand(float_array* restrict arr, int max, int min) {
 
 float_array clone(float_array* restrict arr) {
     float_array new = FloatArray(arr->size);
+    #if defined(CHUNK_SIZE)
     #pragma omp parallel for default(none) shared(arr, new) schedule(SCHEDULE_TYPE, CHUNK_SIZE)
+    #else
+    #pragma omp parallel for default(none) shared(arr, new) schedule(auto)
+    #endif
     for (unsigned long i = 0; i < arr->size; i++) 
         push(&new, arr->begin_ptr[i]);
     return new;
@@ -61,12 +77,15 @@ float_array clone(float_array* restrict arr) {
 
 float_array filter(float_array* restrict arr, bool(* check)(float)) {
     unsigned long new_arr_size = 0;
-    #pragma omp parallel for default(none) shared(arr, check, new_arr_size) schedule(SCHEDULE_TYPE, CHUNK_SIZE)
     for (unsigned long i = 0; i < arr->size; i++) 
         if (check(arr->begin_ptr[i]) == true) 
             new_arr_size++;
     float_array new = FloatArray(new_arr_size);
-    #pragma omp parallel for default(none) shared(arr, new, check) schedule(SCHEDULE_TYPE, CHUNK_SIZE)
+    #if defined(CHUNK_SIZE)
+    #pragma omp parallel for default(none) shared(arr, check, new) schedule(SCHEDULE_TYPE, CHUNK_SIZE)
+    #else
+    #pragma omp parallel for default(none) shared(arr, check, new) schedule(auto)
+    #endif
     for (unsigned long i = 0; i < arr->size; i++) 
         if (check(arr->begin_ptr[i]) == true) 
             push(&new, arr->begin_ptr[i]);
@@ -75,7 +94,11 @@ float_array filter(float_array* restrict arr, bool(* check)(float)) {
 
 float min(float_array* restrict arr) {
     float min = arr->begin_ptr[0];
+    #if defined(CHUNK_SIZE)
     #pragma omp parallel for default(none) shared(arr) schedule(SCHEDULE_TYPE, CHUNK_SIZE) reduction(min:min)
+    #else
+    #pragma omp parallel for default(none) shared(arr) schedule(auto) reduction(min:min)
+    #endif
     for (unsigned long i = 0; i < arr->size; i++)
         min = arr->begin_ptr[i] < min ? arr->begin_ptr[i] : min;
     return min;
