@@ -7,4 +7,4 @@ RUN apt update && \
     bc
 WORKDIR /lab3
 COPY . .
-RUN ./build.sh
+RUN chmod +x build.sh && ./build.sh
