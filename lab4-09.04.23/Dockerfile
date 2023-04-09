@@ -2,12 +2,9 @@ FROM debian:latest
 RUN apt update && \
     apt install -y --allow-unauthenticated \
     g++ \
-    gnuplot \
     nano \
     screenfetch \
-    bc \
-    curl
-WORKDIR /lab2
+    bc
+WORKDIR /lab4
 COPY . .
 RUN chmod +x build.sh && ./build.sh
-ENV LD_LIBRARY_PATH=/lab2/src/FW_1.3.1_Lin64/lib:$LD_LIBRARY_PATH
