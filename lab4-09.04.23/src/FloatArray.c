@@ -8,6 +8,9 @@
 
 __thread unsigned int seed = 0;
 
+unsigned int hash(unsigned int arg) { return ((int) &arg >> 4) * arg; }
+
+
 typedef struct float_array {
     float* begin_ptr;
     unsigned long size;
@@ -46,6 +49,7 @@ float_array* fill_rand(float_array* restrict arr, int max, int min) {
     #pragma omp parallel for
     for (unsigned long i = 0; i < arr->size; i++) {
         seed = i;
+        srand(hash(seed));
         arr->begin_ptr[i] = (max <= min || abs(max) == abs(min)) ? 0 : min + rand_r(&seed) % ((max + 1) - min);
     }
     return arr;
@@ -94,30 +98,29 @@ float_array* print(float_array* restrict arr) {
     return arr;
 }
 
+// sort algorithm was replaced because my original algorithm uses recursion, but it's not recommended to use OpenMP with it  
 float_array* sort(float_array* restrict arr) {
     void __swap(float* a, float* b);
-    void __heapify(float arr[], int N, int i);
-    for (int i = arr->size / 2 - 1; i >= 0; i--) 
-        __heapify(arr->begin_ptr, arr->size, i);
-    for (int i = arr->size - 1; i >= 0; i--) {
-        __swap(&arr->begin_ptr[0], &arr->begin_ptr[i]);
-        __heapify(arr->begin_ptr, i, 0);
+    int half = (int) arr->size / 2;
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        for (int i = 0; i < half; i++)
+            for (int j = 0; j < half; j++)
+                if (arr->begin_ptr[j] > arr->begin_ptr[j + 1])
+                    __swap(&arr->begin_ptr[j], &arr->begin_ptr[j + 1]);
+        #pragma omp section
+        for (int i = half; i < arr->size - 1; i++)
+            for (int j = half; j < arr->size - 1; j++)
+                if (arr->begin_ptr[j] > arr->begin_ptr[j + 1])
+                    __swap(&arr->begin_ptr[j], &arr->begin_ptr[j + 1]);
     }
+
+    
     return arr;
 }
     void __swap(float* a, float* b) {
         float temp = *a;
         *a = *b;
         *b = temp;
-    }
-    void __heapify(float arr[], int N, int i) {
-        int largest = i;
-        int left = 2 * i + 1;
-        int right = 2 * i + 2;
-        if (left < N && arr[left] > arr[largest]) largest = left;
-        if (right < N && arr[right] > arr[largest]) largest = right;
-        if (largest != i) {
-            __swap(&arr[i], &arr[largest]);
-            __heapify(arr, N, largest);
-        }
     }

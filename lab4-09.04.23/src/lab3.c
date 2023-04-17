@@ -63,6 +63,7 @@ int main(int argc, char* argv[]) {
         float_array not_null_arr = filter(&M2, not_null);
         float min_not_null = min(&not_null_arr);
         float sum = 0;
+        // not necessary to wrap all pragmas, it will be raised as warning if openmd not supported
         #pragma omp parallel for reduction(+:sum)
         for (unsigned long i = 0; i < M2.size; i++) {
             float it = M2.begin_ptr[i];
