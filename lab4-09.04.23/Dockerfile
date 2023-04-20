@@ -3,7 +3,7 @@ RUN apt update && \
     apt install -y --allow-unauthenticated \
     g++ \
     nano \
-    screenfetch \
+    neofetch \
     bc
 WORKDIR /lab4
 COPY . .
