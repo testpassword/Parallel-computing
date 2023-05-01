@@ -115,9 +115,7 @@ float_array* sort(float_array* restrict arr) {
             for (int j = half; j < arr->size - 1; j++)
                 if (arr->begin_ptr[j] > arr->begin_ptr[j + 1])
                     __swap(&arr->begin_ptr[j], &arr->begin_ptr[j + 1]);
-    }
-
-    
+    }    
     return arr;
 }
     void __swap(float* a, float* b) {

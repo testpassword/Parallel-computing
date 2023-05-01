@@ -26,6 +26,25 @@ void* print_progress(void* arg) {
     return NULL;
 }
 
+long calc_exec_time(
+    #if defined(_OPENMP)
+    double start
+    #else
+    struct timeval start
+    #endif
+) {
+    long exec_time;
+    #if defined(_OPENMP)
+    double final = omp_get_wtime();
+    exec_time = (final - start) * 1000;
+    #else
+    struct timeval final;
+    gettimeofday(&final, NULL);
+    exec_time = 1000 * (final.tv_sec - start.tv_sec) + (final.tv_usec - start.tv_usec) / 1000;
+    #endif
+    return exec_time;
+}
+
 float hyper_tan_minus1(float x) { return tanh(x) + 1; }  // special function discussed personally with the teacher 
 float to_negative0_1(float x) { return x / 1000 * -1; }  // special function discussed personally with the teacher 
 float abs_sin(float val1, float val2) { return fabs(sin(val1 + val2)); }
@@ -38,19 +57,25 @@ int main(int argc, char* argv[]) {
     if (argc < 3) return -1;
     const int N = atoi(argv[1]);
     num_of_experements = atoi(argv[2]);
-    long exec_time;
+    long* iterations_exec_time = malloc(MARK4_NUM_OF_EXPEREMENTS * sizeof(long));
     #if defined(_OPENMP)
     omp_set_num_threads(16);  // equals to number of processor's threads
-    double T1, T2;
-    T1 = omp_get_wtime();
+    double start;
+    start = omp_get_wtime();
     #else
-    struct timeval T1, T2;
-    gettimeofday(&T1, NULL);
+    struct timeval start;
+    gettimeofday(&start, NULL);
     #endif
     pthread_t progress_t;
     pthread_create(&progress_t, NULL, print_progress, NULL);
-    //if (num_of_experements == MARK4_NUM_OF_EXPEREMENTS)
     for (int i = 0; i < num_of_experements; i++) {
+        if (num_of_experements == MARK4_NUM_OF_EXPEREMENTS) {
+            #if defined(_OPENMP) 
+            start = omp_get_wtime();
+            #else
+            gettimeofday(&start, NULL);
+            #endif
+        }
         // GENERATE
         float_array M1 = FloatArray(N);
         float_array M2 = FloatArray(N / 2);
@@ -81,18 +106,16 @@ int main(int argc, char* argv[]) {
         clean(&M1);
         clean(&M2);
         progress++;
+        if (num_of_experements == MARK4_NUM_OF_EXPEREMENTS) iterations_exec_time[i] = calc_exec_time(start);
     }
-    #if defined(_OPENMP)
-    T2 = omp_get_wtime();
-    exec_time = T2 - T1;
-    #else
-    gettimeofday(&T2, NULL);
-    exec_time = 1000 * (T2.tv_sec - T1.tv_sec) + (T2.tv_usec - T1.tv_usec) / 1000;
-    #endif
     pthread_join(progress_t, NULL);
-
-    //if (num_of_experements == MARK3_NUM_OF_EXPEREMENTS) 
-    printf("N=%d. Milliseconds passed: %ld\n", N, exec_time);
-
+    if (num_of_experements == MARK4_NUM_OF_EXPEREMENTS) {
+        printf("[");
+        for (long j = 0; j < MARK4_NUM_OF_EXPEREMENTS; j++) {
+            printf("%d", iterations_exec_time[j]);
+            if (j != MARK4_NUM_OF_EXPEREMENTS - 1 ) printf("; ");
+        }
+        printf("]\n");
+    } else printf("N=%d. Milliseconds passed: %ld\n", N, calc_exec_time(start));
     return 0;
 }
