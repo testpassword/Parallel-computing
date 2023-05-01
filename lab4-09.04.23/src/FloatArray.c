@@ -3,8 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#ifdef _OPENMP
 #include <omp.h>
-
+#endif
 
 __thread unsigned int seed = 0;
 

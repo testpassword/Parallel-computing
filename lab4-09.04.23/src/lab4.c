@@ -3,12 +3,16 @@
 #include <math.h>
 #include <sys/time.h>
 #include <stdbool.h>
-#include <omp.h>
+#ifdef _OPENMP
+#include "omp.h"
+#endif
 #include <pthread.h>
 #include "FloatArray.h"
 
 #define A 392
 #define DELAY 1
+#define MARK3_NUM_OF_EXPEREMENTS 100
+#define MARK4_NUM_OF_EXPEREMENTS 10
 
 int progress = 0;
 int num_of_experements = 0;
@@ -16,8 +20,10 @@ int num_of_experements = 0;
 void* print_progress(void* arg) {
     while (progress < num_of_experements) {
         sleep(DELAY);
-        printf("%d/%d\n", progress, num_of_experements);
+        float percentage = (float) progress / (float) num_of_experements * 100.0;
+        printf("%.0f%\n", percentage);
     }
+    return NULL;
 }
 
 float hyper_tan_minus1(float x) { return tanh(x) + 1; }  // special function discussed personally with the teacher 
@@ -26,6 +32,8 @@ float abs_sin(float val1, float val2) { return fabs(sin(val1 + val2)); }
 float pair_min(float val1, float val2) { return val1 < val2 ? val1 : val2; }
 bool not_null(float val) { return val != 0 && val != NAN; }
 
+
+// argv[0]: programm name; argv[1]: size of test array; argv[2]: number of experements
 int main(int argc, char* argv[]) {
     if (argc < 3) return -1;
     const int N = atoi(argv[1]);
@@ -41,6 +49,7 @@ int main(int argc, char* argv[]) {
     #endif
     pthread_t progress_t;
     pthread_create(&progress_t, NULL, print_progress, NULL);
+    //if (num_of_experements == MARK4_NUM_OF_EXPEREMENTS)
     for (int i = 0; i < num_of_experements; i++) {
         // GENERATE
         float_array M1 = FloatArray(N);
@@ -81,6 +90,9 @@ int main(int argc, char* argv[]) {
     exec_time = 1000 * (T2.tv_sec - T1.tv_sec) + (T2.tv_usec - T1.tv_usec) / 1000;
     #endif
     pthread_join(progress_t, NULL);
+
+    //if (num_of_experements == MARK3_NUM_OF_EXPEREMENTS) 
     printf("N=%d. Milliseconds passed: %ld\n", N, exec_time);
+
     return 0;
 }

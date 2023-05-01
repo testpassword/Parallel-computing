@@ -7,4 +7,4 @@ RUN apt update && \
     bc
 WORKDIR /lab4
 COPY . .
-RUN chmod +x build.sh && ./build.sh
+RUN chmod +x build.sh perfomance_test.sh && ./build.sh
