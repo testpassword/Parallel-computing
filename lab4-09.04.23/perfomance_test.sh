@@ -2,7 +2,7 @@ N1=1600  # N1 and N2 was found in lab2
 N2=526999
 Dn=$(echo "scale=0; ($N2 - $N1) / 10" | bc -l)
 # TODO: find real
-Nx=5  # Nx was found manually for this lab
+Nx=4000  # Nx was found manually for this lab
 
 FROM=$(echo "scale=0; $Nx / 2" | bc -l)
 FROM=$(($FROM < $N1 ? $FROM : $N1))
