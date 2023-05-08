@@ -5,7 +5,7 @@ from numbers import Number
 from dataclasses import dataclass
 
 
-def confident_interval(data: list[Number]):
+def confident_interval(data: list[Number]) -> tuple[float]:
     return st.t.interval(0.95, df=len(data)-1, loc=np.mean(data), scale=st.sem(data))    
 
 

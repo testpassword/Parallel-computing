@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
         float sum = 0;
         for (unsigned long i = 0; i < M2.size; i++) {
             float it = M2.begin_ptr[i];
-            if ((int)(it / min_not_null) == 0) sum+= sin(it);
+            if ((int)(it / min_not_null) == 0) sum += sin(it);
         }
         clean(&M1);
         clean(&M2);
