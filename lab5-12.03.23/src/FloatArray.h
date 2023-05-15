@@ -11,9 +11,16 @@ struct par_iter {
     pthread_t* thrs;
 };
 
-float_array FloatArray(unsigned long size);
-
 struct par_iter get_parallel_iterator(long arr_size);
+
+struct pair {
+    long first;
+    long second;
+};
+
+struct pair get_range(struct par_iter* piter, long i);
+
+float_array FloatArray(unsigned long size);
 
 float_array* push(float_array* restrict arr, float val);
 

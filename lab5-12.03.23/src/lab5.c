@@ -51,6 +51,9 @@ float pair_min(float val1, float val2) { return val1 < val2 ? val1 : val2; }
 bool not_null(float val) { return val != 0 && val != NAN; }
 
 
+// TODO: распараллелить оставшиеся функции
+// TODO: установить расписание для openmp
+
 // argv[0]: programm name; argv[1]: size of test array; argv[2]: number of experements
 int main(int argc, char* argv[]) {
     if (argc < 3) return -1;
@@ -58,9 +61,13 @@ int main(int argc, char* argv[]) {
 
     float_array M1 = FloatArray(10);
     push(push(push(push(push(push(push(push(push(push(&M1, 10), 3), 8), 4), 9), 5), 12), 45), 69), 79);
+    float_array M2 = FloatArray(3);
+    push(push(push(&M2, 44), 99), 22);
     print(&M1);
-    map(&M1, hyper_tan_minus1);
-    print(&M1);
+    print(&M2);
+    merge(&M1, &M2, pair_min);
+    print(&M2);
+
 
     // num_of_experements = atoi(argv[2]);
     // #if defined(_OPENMP)
