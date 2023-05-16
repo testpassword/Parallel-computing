@@ -4,22 +4,6 @@ typedef struct float_array {
     unsigned long engaged;
 } float_array;
 
-struct par_iter {
-    long default_chunk_size;
-    long last_chunk_size;
-    long num_of_thrs;
-    pthread_t* thrs;
-};
-
-struct par_iter get_parallel_iterator(long arr_size);
-
-struct pair {
-    long first;
-    long second;
-};
-
-struct pair get_range(struct par_iter* piter, long i);
-
 float_array FloatArray(unsigned long size);
 
 float_array* push(float_array* restrict arr, float val);
@@ -43,3 +27,5 @@ float_array* print(float_array* restrict arr);
 float_array* sort(float_array* restrict arr);
     void __swap(float* a, float* b);
     void __heapify(float arr[], int N, int i);
+
+float sum_by(float_array* restrict arr, bool(* predicate)(float, float), float predicate_arg);
