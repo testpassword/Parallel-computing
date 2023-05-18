@@ -8,4 +8,4 @@ RUN apt update && \
     pip3 install numpy scipy
 WORKDIR /lab5
 COPY . .
-RUN chmod +x build.sh && ./build.sh 
+RUN chmod +x build.sh perfomance_test.sh && ./build.sh 

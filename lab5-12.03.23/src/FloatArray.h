@@ -1,3 +1,5 @@
+#define CORES sysconf(_SC_NPROCESSORS_ONLN)
+
 typedef struct float_array {
     float* begin_ptr;
     unsigned long size;

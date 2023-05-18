@@ -8,6 +8,8 @@
 #include "FloatArray.h"
 #include "PIter.h"
 
+#define RANGE unsigned long from; unsigned long to
+
 __thread unsigned int seed = 0;
 
 unsigned int hash(unsigned int arg) { return ((int) &arg >> 4) * arg; }
@@ -30,7 +32,7 @@ float_array* push(float_array* restrict arr, float val) {
 
 float_array* map(float_array* restrict arr, float(* transform)(float)) {
     
-    struct __map_pthread_args { float_array* restrict arr; unsigned long from; unsigned long to; float(* transform)(float); };
+    struct __map_pthread_args { float_array* restrict arr; float(* transform)(float); RANGE; };
 
     void* __map_pthread_handler(void* args) {
         struct __map_pthread_args* args_st = (struct __map_pthread_args*) args;
@@ -58,9 +60,9 @@ float_array* map(float_array* restrict arr, float(* transform)(float)) {
 
 float_array* merge(float_array* restrict arr, float_array* restrict to, float(* transform)(float, float)) {
 
-    struct __merge_pthread_args { float_array* restrict from_arr; float_array* restrict to_arr; unsigned long from; unsigned long to; float(* transform)(float, float); };
+    struct __merge_pthread_args { float_array* restrict from_arr; float_array* restrict to_arr; float(* transform)(float, float); RANGE; };
 
-    void* __merge_pthread(void* args) {
+    void* __merge_pthread_handler(void* args) {
         struct __merge_pthread_args* args_st = (struct __merge_pthread_args*) args;
         FOR_RANGE
             args_st->to_arr->begin_ptr[i] = args_st->transform(args_st->from_arr->begin_ptr[i], args_st->to_arr->begin_ptr[i]);
@@ -77,7 +79,7 @@ float_array* merge(float_array* restrict arr, float_array* restrict to, float(* 
         args->from_arr = arr;
         args->to_arr = to;
         args->transform = transform;
-        CREATE_PITER(__merge_pthread);
+        CREATE_PITER(__merge_pthread_handler);
     }
     JOIN_PITER();
     #endif
@@ -87,9 +89,9 @@ float_array* merge(float_array* restrict arr, float_array* restrict to, float(* 
 
 float_array* fill_rand(float_array* restrict arr, int max, int min) {
 
-    struct __fill_rand_pthread_args { float_array* restrict arr; int max; int min; unsigned long from; unsigned long to; };
+    struct __fill_rand_pthread_args { float_array* restrict arr; int max; int min; RANGE; };
 
-    void* __fill_rand_pthread(void* args) {
+    void* __fill_rand_pthread_handler(void* args) {
         struct __fill_rand_pthread_args* args_st = (struct __fill_rand_pthread_args*) args;
         FOR_RANGE {
             seed = i;
@@ -112,7 +114,7 @@ float_array* fill_rand(float_array* restrict arr, int max, int min) {
         args->arr = arr;
         args->max = max;
         args->min = min;
-        CREATE_PITER(__fill_rand_pthread);
+        CREATE_PITER(__fill_rand_pthread_handler);
     }
     JOIN_PITER();
     #endif
@@ -122,9 +124,9 @@ float_array* fill_rand(float_array* restrict arr, int max, int min) {
 
 float_array clone(float_array* restrict arr) {
 
-    struct __clone_pthread_args { float_array* restrict orig; float_array* restrict copy; unsigned long from; unsigned long to; };
+    struct __clone_pthread_args { float_array* restrict orig; float_array* restrict copy; RANGE; };
 
-    void* __clone_pthread(void* args) {
+    void* __clone_pthread_handler(void* args) {
         struct __clone_pthread_args* args_st = (struct __clone_pthread_args*) args;
         FOR_RANGE
             push(args_st->copy, args_st->orig->begin_ptr[i]);
@@ -141,7 +143,7 @@ float_array clone(float_array* restrict arr) {
         struct __clone_pthread_args* args = malloc(sizeof(struct __clone_pthread_args));
         args->orig = arr;
         args->copy = &new;
-        CREATE_PITER(__clone_pthread);
+        CREATE_PITER(__clone_pthread_handler);
     }
     JOIN_PITER();
     #endif
@@ -151,9 +153,9 @@ float_array clone(float_array* restrict arr) {
 
 float_array filter(float_array* restrict arr, bool(* check)(float)) {
 
-    struct __filter_pthread_args { float_array* restrict orig; float_array* restrict new; bool(* check)(float); unsigned long from; unsigned long to; };
+    struct __filter_pthread_args { float_array* restrict orig; float_array* restrict new; bool(* check)(float); RANGE; };
 
-    void* __filter_pthread(void* args) {
+    void* __filter_pthread_handler(void* args) {
         struct __filter_pthread_args* args_st = (struct __filter_pthread_args*) args;
         FOR_RANGE
             if (args_st->check(args_st->orig->begin_ptr[i]) == true) 
@@ -177,7 +179,7 @@ float_array filter(float_array* restrict arr, bool(* check)(float)) {
         args->orig = arr;
         args->new = &new;
         args->check = check;
-        CREATE_PITER(__filter_pthread);
+        CREATE_PITER(__filter_pthread_handler);
     }
     JOIN_PITER();
     #endif
@@ -189,9 +191,9 @@ float min(float_array* restrict arr) {
 
     float* __min_thrs_work_result;
 
-    struct __min_pthread_args { float_array* restrict arr; unsigned long from; unsigned long to; unsigned long chunk_number; };
+    struct __min_pthread_args { float_array* restrict arr; unsigned long chunk_number; RANGE; };
 
-    void* __min_pthread(void* args) {
+    void* __min_pthread_handler(void* args) {
         struct __min_pthread_args* args_st = (struct __min_pthread_args*) args;
         float local_min = args_st->arr->begin_ptr[args_st->from];
         FOR_RANGE
@@ -206,17 +208,16 @@ float min(float_array* restrict arr) {
     for (unsigned long i = 0; i < arr->size; i++)
         min = arr->begin_ptr[i] < min ? arr->begin_ptr[i] : min;
     #else
-    long num_of_threads = sysconf(_SC_NPROCESSORS_ONLN);
-    __min_thrs_work_result = malloc(num_of_threads * sizeof(float));
+    __min_thrs_work_result = malloc(CORES * sizeof(float));
     PREPARE_PITER {
         struct __min_pthread_args* args = malloc(sizeof(struct __min_pthread_args));
         args->arr = arr;
         args->chunk_number = i;
-        CREATE_PITER(__min_pthread);
+        CREATE_PITER(__min_pthread_handler);
     }
     JOIN_PITER();
     float min = __min_thrs_work_result[0];
-    for (unsigned long j = 0; j < num_of_threads; j++)
+    for (unsigned long j = 0; j < CORES; j++)
         min = __min_thrs_work_result[j] < min ? __min_thrs_work_result[j] : min;
     #endif
     return min;
@@ -273,9 +274,9 @@ float sum_by(float_array* restrict arr, bool(* predicate)(float, float), float p
 
     float* __sum_by_thrs_work_result;
 
-    struct __sum_by_pthread_args { float_array* restrict arr; bool(* predicate)(float, float); float predicate_arg; unsigned long from; unsigned long to; unsigned long chunk_number; };    
+    struct __sum_by_pthread_args { float_array* restrict arr; bool(* predicate)(float, float); float predicate_arg; unsigned long chunk_number; RANGE; };
 
-    void* __sum_by_pthread(void* args) {
+    void* __sum_by_pthread_handler(void* args) {
         struct __sum_by_pthread_args* args_st = (struct __sum_by_pthread_args*) args;
         float local_sum = args_st->arr->begin_ptr[args_st->from];
         FOR_RANGE {
@@ -296,18 +297,17 @@ float sum_by(float_array* restrict arr, bool(* predicate)(float, float), float p
             sum += sin(it);
     }
     #else
-    long num_of_threads = sysconf(_SC_NPROCESSORS_ONLN);
-    __sum_by_thrs_work_result = malloc(num_of_threads * sizeof(float));
+    __sum_by_thrs_work_result = malloc(CORES * sizeof(float));
     PREPARE_PITER {
         struct __sum_by_pthread_args* args = malloc(sizeof(struct __sum_by_pthread_args));
         args->arr = arr;
         args->predicate = predicate;
         args->predicate_arg = predicate_arg;
         args->chunk_number = i;
-        CREATE_PITER(__sum_by_pthread);
+        CREATE_PITER(__sum_by_pthread_handler);
     }
     JOIN_PITER();
-    for (unsigned long j = 0; j < num_of_threads; j++)
+    for (unsigned long j = 0; j < CORES; j++)
         sum += __sum_by_thrs_work_result[j];    
     #endif
     return sum;
