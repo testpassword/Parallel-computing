@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
     for (unsigned long i = 0; i < 6; i++) {
         printf("%d", times_finish[i]);
         if (i != 6 - 1) 
-            printf(", ");
+            printf(",");
     }
     return 0;
 }
