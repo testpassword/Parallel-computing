@@ -16,11 +16,11 @@ test_perf() {
         echo -n "$I,$(."/lab5_$MODE" $I 100 | tail -n1)" >> $CSV
         if [ "$MODE" == "NOMP" ]; then
             echo "sleep..."  # without sleep, Segmentation fault will be raised. I probably leaked memory, and with the help of sleep, the OS cleans up the memory for me
-            sleep 2m
+            sleep 3m
         fi
         echo >> $CSV
     done
 }
 
 test_perf MP
-test_perf NOMP
+test_perf PTH
